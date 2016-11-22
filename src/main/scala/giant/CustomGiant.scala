@@ -1,0 +1,3 @@
+package giant
+
+class CustomGiant{}
