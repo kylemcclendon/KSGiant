@@ -23,8 +23,8 @@ case class damageEvents(instance: KSGiant) extends Listener {
   @EventHandler
   private def playerHurtGiant(event: EntityDamageByEntityEvent) {
     //Check if entity getting hurt is Giant
-    if(event.getEntityType.equals(EntityType.GIANT)){
-      if(event.getDamager.isInstanceOf[Player]) {
+    if (event.getEntityType.equals(EntityType.GIANT)) {
+      if (event.getDamager.isInstanceOf[Player]) {
         //Attacker is a melee Player
         event.setDamage(event.getDamage * 0.75D) //Three-Quarter damage to entity to nerf melee
 
@@ -50,7 +50,7 @@ case class damageEvents(instance: KSGiant) extends Listener {
             event.getEntity.getWorld.spawnEntity(l, EntityType.ZOMBIE).asInstanceOf[Zombie].setBaby(true)
             event.getEntity.getWorld.spawnEntity(l, EntityType.ZOMBIE).asInstanceOf[Zombie].setBaby(true)
           }
-          else if(next == 5){
+          else if (next == 5) {
             val pz1 = event.getEntity.getWorld.spawnEntity(l, EntityType.PIG_ZOMBIE).asInstanceOf[PigZombie]
             val pz2 = event.getEntity.getWorld.spawnEntity(l, EntityType.PIG_ZOMBIE).asInstanceOf[PigZombie]
             pz1.setAnger(32767)
@@ -60,38 +60,39 @@ case class damageEvents(instance: KSGiant) extends Listener {
           }
         }
       }
-      else if(event.getDamager.getType.equals(EntityType.ARROW) && event.getDamager.asInstanceOf[Arrow].getShooter.isInstanceOf[Player]){
+      else if (event.getDamager.getType.equals(EntityType.ARROW) && event.getDamager.asInstanceOf[Arrow].getShooter.isInstanceOf[Player]) {
         //Attacker is a bow Player
         event.setDamage(event.getDamage / 4.0D) //Quarter damage to entity to nerf bows
 
         val e = event.getEntity
         var eloc = e.getLocation()
-        e.getWorld.playSound(eloc,Sound.ENTITY_POLAR_BEAR_DEATH, 10, 0.1F)
-        eloc = eloc.add(0,10,0)
+        e.getWorld.playSound(eloc, Sound.ENTITY_POLAR_BEAR_DEATH, 10, 0.1F)
+        eloc = eloc.add(0, 10, 0)
         val p = event.getDamager.asInstanceOf[Arrow].getShooter.asInstanceOf[Player]
         val loc = p.getLocation
 
-        val fireballChance = Math.random()*2
+        val fireballChance = Math.random() * 2
 
-        if(fireballChance.toInt == 1) {
+        if (fireballChance.toInt == 1) {
           val fireball = eloc.getWorld.spawn(eloc, classOf[Fireball])
           fireball.setIsIncendiary(false)
           fireball.setYield(3)
           fireball.setShooter(e.asInstanceOf[ProjectileSource])
 
-          val vector = loc.toVector().subtract(eloc.toVector())
+          val vector = loc.toVector.subtract(eloc.toVector)
           fireball.setDirection(vector.normalize().multiply(0.0001))
         }
       }
-    else{
-      //Prevent Other Damage From Giant Attacks
-      if(event.getDamager.isInstanceOf[Fireball]){
-        val f = event.getDamager.asInstanceOf[Fireball]
-        if(f.getShooter.isInstanceOf[CraftGiant]){
-          event.setCancelled(true)
-        }
-      }
     }
+    else {
+      //Prevent Other Damage From Giant Attacks
+      event.getDamager match {
+        case f: Fireball =>
+          if (f.getShooter.isInstanceOf[CraftGiant]) {
+            event.setCancelled(true)
+          }
+        case _ =>
+      }
     }
   }
 
@@ -140,16 +141,16 @@ case class damageEvents(instance: KSGiant) extends Listener {
         l.getWorld.createExplosion(l.getX - 3.75D, l.getY, l.getZ + 3.75D, 0.0F, false, false)
         l.getWorld.createExplosion(l.getX + 3.75D, l.getY, l.getZ - 3.75D, 0.0F, false, false)
         for (p <- close) {
-          val distanceMultiplier = getDistance(l, p.getLocation)/7.5
-          if(p.isBlocking){
-            p.damage(75D-75D*distanceMultiplier, giant)
+          val distanceMultiplier = getDistance(l, p.getLocation) / 7.5
+          if (p.isBlocking) {
+            p.damage(75D - 75D * distanceMultiplier, giant)
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 1))
-            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS,100,0))
+            p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0))
             p.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 100, 1))
             pushAway(p, 2.0D, giant)
           }
           else {
-            p.damage(15.0-15.0*distanceMultiplier, giant)
+            p.damage(15.0 - 15.0 * distanceMultiplier, giant)
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 200, 1))
             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 200, 0))
             p.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 200, 2))
@@ -173,7 +174,7 @@ case class damageEvents(instance: KSGiant) extends Listener {
   private def giantToss(giant: CraftGiant, damager: Entity) {
     damager match {
       case player: Player =>
-        if(getDistance(player.getLocation, giant.getLocation) < 5.0D){
+        if (getDistance(player.getLocation, giant.getLocation) < 5.0D) {
           if ((player.getInventory.getBoots != null) && (player.getInventory.getBoots.getType eq Material.DIAMOND_BOOTS) && (player.getInventory.getBoots.getItemMeta != null) && (player.getInventory.getBoots.getItemMeta.getDisplayName != null) && player.getInventory.getBoots.getItemMeta.getDisplayName.equals("Spiked Boots"))
             player.setVelocity(new Vector(0, 1, 0))
           else
@@ -182,7 +183,7 @@ case class damageEvents(instance: KSGiant) extends Listener {
     }
   }
 
-  private def giantShockwave(l: Location, giant: CraftGiant): Unit ={
+  private def giantShockwave(l: Location, giant: CraftGiant): Unit = {
     val players = Bukkit.getServer.getWorld(l.getWorld.getUID).getPlayers.asScala
     var close: List[Player] = Nil
     giant.getWorld.createExplosion(l.getX, l.getY, l.getZ, 0.0F, false, false)
@@ -206,17 +207,16 @@ case class damageEvents(instance: KSGiant) extends Listener {
 
         //Hurt Players And Push Them Away
         for (p <- close) {
-          val distanceMultiplier = getDistance(l, p.getLocation)/10
-          println(distanceMultiplier)
-          if(p.isBlocking){
-            p.damage(120-(120*distanceMultiplier), giant)
+          val distanceMultiplier = getDistance(l, p.getLocation) / 10
+          if (p.isBlocking) {
+            p.damage(120 - (120 * distanceMultiplier), giant)
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 1))
             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0))
             p.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 100, 1))
             pushAway(p, 7.0D, giant)
           }
           else {
-            p.damage(30-(30*distanceMultiplier), giant)
+            p.damage(30 - (30 * distanceMultiplier), giant)
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 200, 1))
             p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 200, 0))
             p.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 200, 2))
@@ -247,12 +247,8 @@ case class damageEvents(instance: KSGiant) extends Listener {
         giant.getWorld.createExplosion(l.getX, l.getY, l.getZ - 10.0D, 0.0F, false, false)
         giant.getWorld.createExplosion(l.getX + 10.0D, l.getY, l.getZ - 10.0D, 0.0F, false, false)
         giant.getWorld.createExplosion(l.getX + 10.0D, l.getY, l.getZ - 10.0D, 0.0F, false, false)
-//        giant.getWorld.createExplosion(l.getX + 15.0D, l.getY, l.getZ + 10.0D, 0.0F, false, false)
-//        giant.getWorld.createExplosion(l.getX + 10.0D, l.getY, l.getZ + 15.0D, 0.0F, false, false)
         giant.getWorld.createExplosion(l.getX - 10.0D, l.getY, l.getZ - 10.0D, 0.0F, false, false)
         giant.getWorld.createExplosion(l.getX - 10.0D, l.getY, l.getZ - 10.0D, 0.0F, false, false)
-//        giant.getWorld.createExplosion(l.getX - 10.0D, l.getY, l.getZ + 15.0D, 0.0F, false, false)
-//        giant.getWorld.createExplosion(l.getX - 15.0D, l.getY, l.getZ + 10.0D, 0.0F, false, false)
       }
     }, 9L)
 
@@ -260,18 +256,18 @@ case class damageEvents(instance: KSGiant) extends Listener {
   }
 
   @EventHandler
-  private def giantFireball(event: EntityExplodeEvent ): Unit ={
-    if(event.getEntityType.equals(EntityType.FIREBALL)){
+  private def giantFireball(event: EntityExplodeEvent): Unit = {
+    if (event.getEntityType.equals(EntityType.FIREBALL)) {
       val f = event.getEntity.asInstanceOf[Fireball]
       val floc = event.getLocation
-      if(f.getShooter.isInstanceOf[CraftGiant]){
-        val babies = Math.floor(Math.random()*5)
-        if(babies == 1){
+      if (f.getShooter.isInstanceOf[CraftGiant]) {
+        val babies = Math.floor(Math.random() * 5)
+        if (babies == 1) {
           f.getWorld.spawnEntity(floc, EntityType.ZOMBIE).asInstanceOf[Zombie].setBaby(true)
           f.getWorld.spawnEntity(floc, EntityType.ZOMBIE).asInstanceOf[Zombie].setBaby(true)
           f.getWorld.spawnEntity(floc, EntityType.ZOMBIE).asInstanceOf[Zombie].setBaby(true)
         }
-        else if(babies == 2){
+        else if (babies == 2) {
           val pz1 = event.getEntity.getWorld.spawnEntity(floc, EntityType.PIG_ZOMBIE).asInstanceOf[PigZombie]
           val pz2 = event.getEntity.getWorld.spawnEntity(floc, EntityType.PIG_ZOMBIE).asInstanceOf[PigZombie]
           pz1.setAnger(32767)
@@ -287,11 +283,11 @@ case class damageEvents(instance: KSGiant) extends Listener {
   private def giantFall(event: EntityDamageEvent) {
     event.getEntityType match {
       case EntityType.ARMOR_STAND =>
-        if(event.getCause.equals(EntityDamageEvent.DamageCause.PROJECTILE)) {
+        if (event.getCause.equals(EntityDamageEvent.DamageCause.PROJECTILE)) {
           event.setCancelled(true)
         }
       case EntityType.GIANT =>
-        event.getCause match{
+        event.getCause match {
           case DamageCause.FIRE | DamageCause.FIRE_TICK | DamageCause.POISON | DamageCause.HOT_FLOOR | DamageCause.DROWNING =>
             event.setCancelled(true)
           case DamageCause.FALL =>
@@ -308,7 +304,7 @@ case class damageEvents(instance: KSGiant) extends Listener {
     }
   }
 
-  private def findAndCrushCacti(l: Location): Unit ={
+  private def findAndCrushCacti(l: Location): Unit = {
     var location = l
     val locX = l.getX
     val locY = l.getY
@@ -316,15 +312,15 @@ case class damageEvents(instance: KSGiant) extends Listener {
 
     var cactusLocsBuffer = new ListBuffer[Location]()
 
-    for(x <- -3 to 3){
-      for(z <- -3 to 3){
-        if(Bukkit.getWorld(l.getWorld.getUID).getBlockAt(locX.toInt+x, locY.toInt, locZ.toInt+z).getType.equals(Material.CACTUS)){
-          cactusLocsBuffer += new Location(l.getWorld, locX.toInt+x, locY, locZ.toInt+z)
+    for (x <- -3 to 3) {
+      for (z <- -3 to 3) {
+        if (Bukkit.getWorld(l.getWorld.getUID).getBlockAt(locX.toInt + x, locY.toInt, locZ.toInt + z).getType.equals(Material.CACTUS)) {
+          cactusLocsBuffer += new Location(l.getWorld, locX.toInt + x, locY, locZ.toInt + z)
         }
       }
     }
 
-    for( loc <- cactusLocsBuffer){
+    for (loc <- cactusLocsBuffer) {
       loc.getBlock.breakNaturally()
     }
   }
